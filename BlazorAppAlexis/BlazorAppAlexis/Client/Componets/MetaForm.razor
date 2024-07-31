@@ -1,0 +1,56 @@
+
+@using BlazorAppAlexis.Shared
+@using BlazorAppAlexis.Client.Services
+@using BlazorAppAlexis.Shared.Dtos
+@inject MetaService MetaService
+@inject TaskService TaskService
+
+<EditForm Model="Meta" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+      <div class="form-group">
+            <label for="nombre">Nombre</label>
+            <InputText id="nombre" class="form-control" @bind-Value="Meta.Nombre" />
+        </div>
+    
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancelar</button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public MetaDto Meta { get; set; } = new MetaDto();
+
+    [Parameter]
+    public EventCallback OnSave { get; set; }
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    private async Task HandleValidSubmit()
+    {
+        if (Meta.Tareas == null)
+        {
+            Meta.Tareas = new List<TareaDto>();
+        }
+        
+        
+
+        if (Meta.Id == 0)
+        {
+            await MetaService.CreateMetaAsync(Meta);
+        }
+        else
+        {
+            await MetaService.UpdateMetaAsync(Meta);
+        }
+        
+        await OnSave.InvokeAsync();
+    }
+
+    private void Cancel()
+    {
+        OnCancel.InvokeAsync();
+    }
+}
+

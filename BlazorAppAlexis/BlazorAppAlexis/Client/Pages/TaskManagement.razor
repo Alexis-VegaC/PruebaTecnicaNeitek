@@ -1,0 +1,60 @@
+@page "/tareas"
+@using BlazorAppAlexis.Shared.Dtos
+@using BlazorAppAlexis.Client.Services
+@using BlazorAppAlexis.Client.Componets
+@inject TaskService TaskService
+
+<h3>Gestión de Tareas</h3>
+
+@if (isTaskFormVisible)
+{
+    <TaskForm Task="selectedTask" OnSave="HandleSave" OnCancel="HideTaskForm" />
+}
+else
+{
+    <TaskList OnEditTask="EditTask" OnTaskDeleted="HandleTaskDeleted" OnCreateTask="ShowCreateTaskForm" />
+}
+
+@code {
+    private List<TareaDto> tareas;
+    private TareaDto selectedTask = new TareaDto();
+    private bool isTaskFormVisible;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTareas();
+    }
+
+    private async Task LoadTareas()
+    {
+        tareas = await TaskService.GetAllTareasAsync();
+    }
+
+    private void EditTask(TareaDto task)
+    {
+        selectedTask = task;
+        isTaskFormVisible = true;
+    }
+
+    private void ShowCreateTaskForm()
+    {
+        selectedTask = new TareaDto();
+        isTaskFormVisible = true;
+    }
+
+    private async Task HandleSave()
+    {
+        isTaskFormVisible = false;
+        await LoadTareas(); 
+    }
+
+    private async Task HandleTaskDeleted()
+    {
+        await LoadTareas(); 
+    }
+
+    private void HideTaskForm()
+    {
+        isTaskFormVisible = false;
+    }
+}

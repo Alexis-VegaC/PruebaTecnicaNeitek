@@ -1,0 +1,74 @@
+
+@using BlazorAppAlexis.Shared
+@using BlazorAppAlexis.Client.Services
+@using BlazorAppAlexis.Shared.Dtos
+@inject MetaService MetaService
+@inject IJSRuntime JsRuntime
+
+<h3>Lista de Metas</h3>
+
+@if (metas == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Progreso</th>
+            <th>Acciones</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var meta in metas)
+        {
+            <tr>
+                <td>@meta.Nombre</td>
+                <td>@meta.PorcentajeCumplimiento</td>
+                <td>
+                    <button class="btn btn-primary" @onclick="() => OnEditMeta.InvokeAsync(meta)">Editar</button>
+                    <button class="btn btn-danger" @onclick="() => ConfirmDeleteMeta(meta)">Eliminar</button>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <button class="btn btn-success" @onclick="AddMeta">Agregar Meta</button>
+}
+
+@code {
+    [Parameter] public EventCallback<MetaDto> OnEditMeta { get; set; }
+    [Parameter] public EventCallback OnMetaAdded { get; set; }
+
+    private List<MetaDto>? metas;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMetas();
+    }
+
+    private async Task LoadMetas()
+    {
+        metas = await MetaService.GetMetasAsync();
+    }
+
+    private void AddMeta()
+    {
+        OnEditMeta.InvokeAsync(new MetaDto());
+    }
+
+    private async Task ConfirmDeleteMeta(MetaDto meta)
+    {
+        bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"¿Está seguro de eliminar la meta '{meta.Nombre}'?");
+        if (confirmed)
+        {
+            await MetaService.DeleteMetaAsync(meta.Id);
+            await LoadMetas();
+            await OnMetaAdded.InvokeAsync();
+        }
+    }
+}

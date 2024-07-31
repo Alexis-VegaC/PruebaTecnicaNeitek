@@ -1,0 +1,80 @@
+@using BlazorAppAlexis.Shared.Dtos
+@using BlazorAppAlexis.Client.Services
+@inject TaskService TaskService
+@inject MetaService MetaService
+
+<EditForm Model="Task" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+   <div class="form-group">
+           <label for="nombre">Nombre de la Tarea</label>
+           <InputText id="nombre" class="form-control" @bind-Value="Task.Nombre" placeholder="Ingrese el nombre de la tarea" />
+       </div>
+       <div class="form-group">
+           <label for="estado">Estado</label>
+           <InputText id="estado" class="form-control" @bind-Value="Task.Estado" placeholder="Ingrese el estado de la tarea" />
+       </div>
+       <div class="form-group">
+           <label for="importante">¿Es Importante?</label>
+           <div class="form-check">
+               <InputCheckbox id="importante" class="form-check-input" @bind-Value="Task.EsImportante" />
+               <label class="form-check-label" for="importante">Sí</label>
+           </div>
+       </div>
+       <div class="form-group">
+           <label for="meta">Meta Asociada</label>
+           <select class="form-control" @bind="Task.MetaId">
+               <option value="">Seleccione una meta</option>
+               @if (metas != null)
+               {
+                   @foreach (var meta in metas)
+                   {
+                       <option value="@meta.Id">@meta.Nombre</option>
+                   }
+               }
+           </select>
+       </div>
+       <div class="d-flex justify-content-between">
+           <button type="submit" class="btn btn-primary">Guardar</button>
+           <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancelar</button>
+       </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public TareaDto Task { get; set; } = new TareaDto();
+
+    [Parameter]
+    public EventCallback OnSave { get; set; }
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+    
+    private List<MetaDto> metas = new List<MetaDto>();
+    
+    protected override async Task OnInitializedAsync()
+    {
+    // Cargar todas las metas disponibles para mostrarlas en el select
+        metas = await MetaService.GetMetasAsync();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (Task.Id == 0)
+        {
+            await TaskService.CreateTaskAsync(Task);
+        }
+        else
+        {
+            await TaskService.UpdateTaskAsync(Task);
+        }
+
+        await OnSave.InvokeAsync();
+    }
+
+    private void Cancel()
+    {
+        OnCancel.InvokeAsync();
+    }
+}
+

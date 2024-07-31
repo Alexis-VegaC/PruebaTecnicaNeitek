@@ -1,0 +1,90 @@
+
+@using BlazorAppAlexis.Client.Services
+@using BlazorAppAlexis.Shared.Dtos
+@inject TaskService TaskService
+@inject IJSRuntime JsRuntime
+
+<h3>Lista de Tareas</h3>
+
+@if (tareas == null)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Fecha de Creación</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var tarea in tareas)
+            {
+                <tr>
+                    <td>@tarea.Nombre</td>
+                    <td>@tarea.FechaCreada.ToShortDateString()</td>
+                    <td>@tarea.Estado</td>
+                    <td>
+                        <button class="btn btn-primary" @onclick="() => EditTask(tarea)">Editar</button>
+                        <button class="btn btn-danger" @onclick="() => DeleteTask(tarea.Id)">Eliminar</button>
+                        <button class="btn btn-success" @onclick="() => CompleteTask(tarea.Id)">Completar</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <button class="btn btn-success" @onclick=" CreateTask">Agregar Tarea</button>
+}
+
+@code {
+    [Parameter]
+    public EventCallback<TareaDto> OnEditTask { get; set; }
+    
+    [Parameter]
+    public EventCallback OnTaskDeleted { get; set; }
+
+    [Parameter]
+    public EventCallback OnCreateTask { get; set; }
+    
+    private List<TareaDto> tareas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTareas();
+    }
+
+    private async Task LoadTareas()
+    {
+        tareas = await TaskService.GetAllTareasAsync();
+    }
+
+    private async Task EditTask(TareaDto task)
+    {
+        await OnEditTask.InvokeAsync(task);
+    }
+
+    private async Task DeleteTask(int id)
+    {
+        bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", "¿Está seguro de eliminar esta tarea?");
+        if (confirmed)
+        {
+            await TaskService.DeleteTaskAsync(id);
+            await OnTaskDeleted.InvokeAsync(); // Notificar al componente padre para actualizar la lista
+        }
+    }
+
+    private async Task CreateTask()
+    {
+        await OnCreateTask.InvokeAsync();
+    }
+    
+    private async Task CompleteTask(int id)
+    {
+        await TaskService.CompleteTaskAsync(id);
+        await LoadTareas();
+    }
+}

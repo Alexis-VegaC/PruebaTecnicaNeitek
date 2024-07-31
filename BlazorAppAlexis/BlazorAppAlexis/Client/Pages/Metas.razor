@@ -1,0 +1,50 @@
+@page "/metas"
+
+@using BlazorAppAlexis.Client.Services
+@using BlazorAppAlexis.Client.Componets
+@using BlazorAppAlexis.Shared.Dtos
+@inject MetaService MetaService
+
+<h3>Gestión de Metas</h3>
+
+@if (isMetaFormVisible)
+{
+    <MetaForm Meta="selectedMeta" OnSave="HandleSave" OnCancel="HideMetaForm" />
+}
+else
+{
+    <MetaList OnEditMeta="EditMeta" OnMetaAdded="LoadMetas" />
+}
+
+@code {
+    private List<MetaDto> metas;
+    private MetaDto selectedMeta = new MetaDto();
+    private bool isMetaFormVisible;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMetas();
+    }
+
+    private async Task LoadMetas()
+    {
+        metas = await MetaService.GetMetasAsync();
+    }
+
+    private void EditMeta(MetaDto meta)
+    {
+        selectedMeta = meta;
+        isMetaFormVisible = true;
+    }
+
+    private void HandleSave()
+    {
+        isMetaFormVisible = false;
+        LoadMetas();
+    }
+
+    private void HideMetaForm()
+    {
+        isMetaFormVisible = false;
+    }
+}
